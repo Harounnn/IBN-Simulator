@@ -4,7 +4,7 @@ import random
 import logging
 from typing import Dict, Any, Optional
 
-from .store import get_intent, update_status, append_audit, attach_policy, conn, cur
+from .store import get_intent, update_status, append_audit, attach_policy, conn
 from .llm_translator import llm_translate_intent
 from .executor import apply_policy
 
@@ -19,19 +19,23 @@ telemetry_state: Dict[str, Dict[str, float]] = {}
 # configuration
 TELEMETRY_POLL_SECONDS = 5
 LLM_RETRY_ATTEMPTS = 2
-LLM_RETRY_BACKOFF = 1.5  
+LLM_RETRY_BACKOFF = 1.5 
 
 def _list_intents_from_db():
+    """Return list of (intent_id, status). Use a fresh cursor for thread-safety."""
     try:
+        cur = conn.cursor()
         cur.execute("SELECT intent_id, status FROM intents")
-        return cur.fetchall()
+        rows = cur.fetchall()
+        cur.close()
+        return rows
     except Exception as e:
         logger.exception("Failed to list intents from DB: %s", e)
         return []
 
 def _simulate_metrics_for_intent(intent_id: str) -> Dict[str, float]:
-    latency = random.uniform(20, 120)        
-    availability = random.uniform(98.0, 100.0)
+    latency = random.uniform(20, 120)          
+    availability = random.uniform(98.0, 100.0) 
     bandwidth = random.uniform(50, 400)       
     return {"latency": latency, "availability": availability, "bandwidth": bandwidth}
 
