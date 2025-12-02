@@ -1,2 +1,4 @@
 .venv/
 .env
+intents.db
+__pycache__/
